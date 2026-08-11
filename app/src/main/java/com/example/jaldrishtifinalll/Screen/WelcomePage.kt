@@ -112,7 +112,7 @@ fun WelcomePage(navController: NavController) {
                             listOf(
                                 Color(0xFF5BC0D7),
                                 Color(0xFFBDECF4),
-                                //Color(0xFFEAF8FC)
+
                             )
                         )
                     )

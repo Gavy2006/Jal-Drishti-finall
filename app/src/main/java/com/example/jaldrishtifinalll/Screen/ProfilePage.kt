@@ -88,7 +88,6 @@ fun ProfilePage(
             .padding(horizontal = 20.dp)
     ) {
 
-        // ---------------- TOP BAR ----------------
 
         Row(
             modifier = Modifier
@@ -119,7 +118,6 @@ fun ProfilePage(
 
         Spacer(modifier = Modifier.height(25.dp))
 
-        // ---------------- PROFILE HEADER ----------------
 
         if (isLoading && user == null) {
 
@@ -141,7 +139,6 @@ fun ProfilePage(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                // Simple avatar - PHOTO NOT USED
 
                 Box(
                     modifier = Modifier
@@ -189,7 +186,7 @@ fun ProfilePage(
                 modifier = Modifier.height(30.dp)
             )
 
-            // ---------------- PERSONAL INFO ----------------
+
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -231,7 +228,7 @@ fun ProfilePage(
                         modifier = Modifier.height(20.dp)
                     )
 
-                    // EMAIL
+
 
                     ProfileDetail(
                         icon = Icons.Default.Email,
@@ -245,7 +242,7 @@ fun ProfilePage(
                         modifier = Modifier.height(20.dp)
                     )
 
-                    // CITY
+
 
                     if (editingCity) {
 
@@ -339,7 +336,6 @@ fun ProfilePage(
                 modifier = Modifier.height(20.dp)
             )
 
-            // ---------------- JAL DRISHTI CARD ----------------
 
             Card(
                 modifier = Modifier.fillMaxWidth(),

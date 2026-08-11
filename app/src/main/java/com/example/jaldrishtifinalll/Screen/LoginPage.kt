@@ -80,7 +80,7 @@ fun LoginPage(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        // HEADER
+
 
         Row(
             modifier = Modifier
@@ -104,7 +104,7 @@ fun LoginPage(
             modifier = Modifier.height(30.dp)
         )
 
-        // HEADING
+
 
         Text(
             text = "Sign in to",
@@ -124,7 +124,7 @@ fun LoginPage(
             modifier = Modifier.height(35.dp)
         )
 
-        // FORM CARD
+
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -148,7 +148,6 @@ fun LoginPage(
                     modifier = Modifier.height(25.dp)
                 )
 
-                // EMAIL
 
                 OutlinedTextField(
                     value = email,
@@ -167,7 +166,7 @@ fun LoginPage(
                     modifier = Modifier.height(15.dp)
                 )
 
-                // PASSWORD
+
 
                 OutlinedTextField(
                     value = password,
@@ -209,7 +208,7 @@ fun LoginPage(
                     modifier = Modifier.height(10.dp)
                 )
 
-                // ERROR / SUCCESS MESSAGE
+
 
                 if (message.isNotEmpty()) {
 
@@ -236,7 +235,7 @@ fun LoginPage(
                     modifier = Modifier.height(15.dp)
                 )
 
-                // LOGIN BUTTON
+
 
                 Button(
                     onClick = {
@@ -279,7 +278,6 @@ fun LoginPage(
                     modifier = Modifier.height(20.dp)
                 )
 
-                // OR
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -304,7 +302,7 @@ fun LoginPage(
                     modifier = Modifier.height(20.dp)
                 )
 
-                // GOOGLE / APPLE
+
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -312,7 +310,7 @@ fun LoginPage(
                         Arrangement.spacedBy(10.dp)
                 ) {
 
-                    // GOOGLE
+
 
                     Column(
                         modifier = Modifier
@@ -336,7 +334,7 @@ fun LoginPage(
                                     RoundedCornerShape(12.dp)
                             )
                             .clickable {
-                                // Google login later
+
                             },
                         horizontalAlignment =
                             Alignment.CenterHorizontally,
@@ -353,7 +351,6 @@ fun LoginPage(
                         )
                     }
 
-                    // APPLE
 
                     Column(
                         modifier = Modifier
@@ -377,7 +374,6 @@ fun LoginPage(
                                     RoundedCornerShape(12.dp)
                             )
                             .clickable {
-                                // Apple login later
                             },
                         horizontalAlignment =
                             Alignment.CenterHorizontally,

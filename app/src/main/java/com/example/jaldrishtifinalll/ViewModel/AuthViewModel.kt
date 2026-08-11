@@ -21,9 +21,6 @@ class AuthViewModel : ViewModel() {
     val message: StateFlow<String> = _message
 
 
-    // =========================
-    // REGISTER
-    // =========================
 
     fun register(
         name: String,
@@ -63,7 +60,6 @@ class AuthViewModel : ViewModel() {
             _isLoading.value = true
             _message.value = ""
 
-            // 1. Firebase Authentication
             val authResult = authRepository.register(
                 email = email.trim(),
                 password = password
@@ -72,7 +68,6 @@ class AuthViewModel : ViewModel() {
             authResult
                 .onSuccess { uid ->
 
-                    // 2. Create User object
                     val user = User(
                         uid = uid,
                         name = name.trim(),
@@ -81,7 +76,6 @@ class AuthViewModel : ViewModel() {
                         profilePhoto = ""
                     )
 
-                    // 3. Save user to Firestore
                     val firestoreResult =
                         firestoreRepository.saveUser(user)
 
@@ -118,9 +112,6 @@ class AuthViewModel : ViewModel() {
     }
 
 
-    // =========================
-    // LOGIN
-    // =========================
 
     fun login(
         email: String,
@@ -171,10 +162,6 @@ class AuthViewModel : ViewModel() {
     }
 
 
-    // =========================
-    // LOGOUT
-    // =========================
-
     fun logout() {
 
         authRepository.logout()
@@ -183,17 +170,9 @@ class AuthViewModel : ViewModel() {
     }
 
 
-    // =========================
-    // CURRENT USER
-    // =========================
-
     fun getCurrentUser() =
         authRepository.getCurrentUser()
 
-
-    // =========================
-    // CLEAR MESSAGE
-    // =========================
 
     fun clearMessage() {
         _message.value = ""

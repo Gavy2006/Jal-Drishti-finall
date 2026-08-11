@@ -70,14 +70,6 @@ fun Navigation() {
                 HomePage(navController)
             }
 
-//            composable("harvest") {
-//                HarvestPage(navController)
-//            }
-//
-//            composable("map") {
-//                MapPage(navController)
-//            }
-//
             composable("profile") {
                 ProfilePage(navController )
             }
