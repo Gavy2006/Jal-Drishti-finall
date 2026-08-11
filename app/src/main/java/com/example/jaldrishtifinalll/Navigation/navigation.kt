@@ -15,7 +15,9 @@ import com.example.jaldrishtifinalll.Screen.LoginPage
 import com.example.jaldrishtifinalll.Screen.SignUpPage
 import com.example.jaldrishtifinalll.Screen.WelcomePage
 import com.example.jaldrishtifinalll.Screen.JalDrishtiBottomBar
+import com.example.jaldrishtifinalll.Screen.ProfilePage
 import com.example.jaldrishtifinalll.Screen.TopBar
+import com.example.jaldrishtifinalll.ViewModel.ProfileViewModel
 
 @Composable
 fun Navigation() {
@@ -25,7 +27,6 @@ fun Navigation() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    // Top + Bottom bar in 3 screens par nahi dikhega
     val hideBars = currentRoute == "welcome" ||
             currentRoute == "login" ||
             currentRoute == "signup"
@@ -38,7 +39,7 @@ fun Navigation() {
         },
         bottomBar = {
             if (!hideBars) {
-                JalDrishtiBottomBar()
+                JalDrishtiBottomBar(navController = navController)
             }
         }
     ) { paddingValues ->
@@ -77,9 +78,9 @@ fun Navigation() {
 //                MapPage(navController)
 //            }
 //
-//            composable("profile") {
-//                ProfilePage(navController)
-//            }
+            composable("profile") {
+                ProfilePage(navController )
+            }
         }
     }
 }

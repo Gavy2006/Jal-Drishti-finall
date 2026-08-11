@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 private val LightBlue = Color(0xFFEAF8FC)
 private val PrimaryBlue = Color(0xFF5BC0D7)
@@ -35,7 +36,7 @@ private val selected= 0
 
 @Composable
 fun JalDrishtiBottomBar(
-
+navController: NavController
 ) {
 
     Row(
@@ -81,7 +82,7 @@ fun JalDrishtiBottomBar(
             label = "Profile",
             selected  == 3,
             onClick = {
-
+         navController.navigate("profile")
             }
         )
     }

@@ -11,21 +11,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -34,15 +31,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.jaldrishtifinalll.ViewModel.AuthViewModel
 
 @Composable
-fun SignUpPage(navController: NavController) {
+fun SignUpPage(
+    navController: NavController,
+    authViewModel: AuthViewModel = viewModel()
+) {
 
-    var fullName by remember { mutableStateOf("") }
-    var phoneEmail by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
+    var fullName by remember {
+        mutableStateOf("")
+    }
+
+    var email by remember {
+        mutableStateOf("")
+    }
+
+    var password by remember {
+        mutableStateOf("")
+    }
+
+    var confirmPassword by remember {
+        mutableStateOf("")
+    }
+
+    val message by authViewModel.message.collectAsState()
+    val isLoading by authViewModel.isLoading.collectAsState()
 
     Column(
         modifier = Modifier
@@ -63,28 +79,23 @@ fun SignUpPage(navController: NavController) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 15.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            IconButton(
-                onClick = {
-                }
-            ) {
-
-                // add a icon
-            }
 
             Text(
                 text = "Sign in",
                 color = Color.White,
                 fontSize = 16.sp,
                 modifier = Modifier.clickable {
+                    navController.navigate("login")
                 }
             )
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(
+            modifier = Modifier.height(30.dp)
+        )
 
         Text(
             text = "Create your",
@@ -100,7 +111,9 @@ fun SignUpPage(navController: NavController) {
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(modifier = Modifier.height(35.dp))
+        Spacer(
+            modifier = Modifier.height(35.dp)
+        )
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -120,7 +133,9 @@ fun SignUpPage(navController: NavController) {
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(25.dp))
+                Spacer(
+                    modifier = Modifier.height(25.dp)
+                )
 
                 OutlinedTextField(
                     value = fullName,
@@ -135,22 +150,26 @@ fun SignUpPage(navController: NavController) {
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(
+                    modifier = Modifier.height(15.dp)
+                )
 
                 OutlinedTextField(
-                    value = phoneEmail,
+                    value = email,
                     onValueChange = {
-                        phoneEmail = it
+                        email = it
                     },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = {
-                        Text("Phone Number / Email")
+                        Text("Email")
                     },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(
+                    modifier = Modifier.height(15.dp)
+                )
 
                 OutlinedTextField(
                     value = password,
@@ -167,7 +186,9 @@ fun SignUpPage(navController: NavController) {
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(
+                    modifier = Modifier.height(15.dp)
+                )
 
                 OutlinedTextField(
                     value = confirmPassword,
@@ -184,12 +205,41 @@ fun SignUpPage(navController: NavController) {
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                Spacer(modifier = Modifier.height(25.dp))
+                Spacer(
+                    modifier = Modifier.height(15.dp)
+                )
+
+                if (message.isNotEmpty()) {
+
+                    Text(
+                        text = message,
+                        color = Color.Red,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(
+                            bottom = 10.dp
+                        )
+                    )
+                }
 
                 Button(
                     onClick = {
-                        navController.navigate("home")
+
+                        authViewModel.register(
+                            name = fullName,
+                            email = email,
+                            password = password,
+                            confirmPassword = confirmPassword
+                        ) {
+
+                            navController.navigate("home") {
+                                popUpTo("signup") {
+                                    inclusive = true
+                                }
+                            }
+                        }
+
                     },
+                    enabled = !isLoading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(55.dp),
@@ -200,26 +250,33 @@ fun SignUpPage(navController: NavController) {
                 ) {
 
                     Text(
-                        text = "Register",
+                        text = if (isLoading)
+                            "Creating account..."
+                        else
+                            "Register",
                         color = Color.Black,
                         fontSize = 16.sp
                     )
                 }
 
-                Spacer(modifier = Modifier.height(25.dp))
+                Spacer(
+                    modifier = Modifier.height(25.dp)
+                )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
 
-                    Text("Already have an account? ")
+                    Text(
+                        text = "Already have an account? "
+                    )
 
                     Text(
                         text = "Sign in",
                         color = Color.Gray,
                         modifier = Modifier.clickable {
-                         navController.navigate("login")
+                            navController.navigate("login")
                         }
                     )
                 }
@@ -227,4 +284,3 @@ fun SignUpPage(navController: NavController) {
         }
     }
 }
-

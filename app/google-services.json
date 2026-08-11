@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "777904472104",
+    "project_id": "jal-drishti-finall",
+    "storage_bucket": "jal-drishti-finall.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:777904472104:android:d3762af63f47b978cc351d",
+        "android_client_info": {
+          "package_name": "com.example.jaldrishtifinalll"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJHFA8xrD3RT4nFNWfeDQ2ew8HOnz2ojw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
