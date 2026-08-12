@@ -56,16 +56,16 @@ navController: NavController
             label = "Home",
             selected = selectedItem == 0,
             onClick = {
-
+navController.navigate("home")
             }
         )
 
         BottomBarItem(
             icon = Icons.Default.Home,
-            label = "Harvest",
+            label = "calculate",
             selected = selectedItem == 1,
             onClick = {
-
+               navController.navigate("calculate")
             }
         )
 
