@@ -1,39 +1,32 @@
 package com.example.jaldrishtifinalll.Screen
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapType
-import com.google.maps.android.compose.rememberCameraPositionState
-
+import com.arcgismaps.mapping.ArcGISMap
+import com.arcgismaps.mapping.BasemapStyle
+import com.arcgismaps.mapping.Viewpoint
+import com.arcgismaps.toolkit.geoviewcompose.MapView
 
 @Composable
 fun MapTestScreen() {
 
-    val kurukshetra = LatLng(
-        29.9695,
-        76.8783
-    )
+    val map = remember {
+        ArcGISMap(
+            BasemapStyle.ArcGISImagery
+        ).apply {
 
-    val cameraPositionState =
-        rememberCameraPositionState {
-
-            position =
-                CameraPosition.fromLatLngZoom(
-                    kurukshetra,
-                    15f
-                )
+            initialViewpoint = Viewpoint(
+                latitude = 29.969,
+                longitude = 76.852,
+                scale = 15000.0
+            )
         }
+    }
 
-    GoogleMap(
-        modifier = Modifier,
-        cameraPositionState = cameraPositionState,
-        properties = MapProperties(
-            mapType = MapType.SATELLITE
-        )
+    MapView(
+        modifier = Modifier.fillMaxSize(),
+        arcGISMap = map
     )
-
 }

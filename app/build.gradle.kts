@@ -15,7 +15,7 @@ android {
 
 
         applicationId = "com.example.jaldrishtifinalll"
-        minSdk = 24
+        minSdk = 28
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -41,29 +41,37 @@ android {
     buildFeatures {
         compose = true
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/versions/9/OSGI-INF/MANIFEST.MF"
+        }
+    }
 }
 
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
     }
+
+
 }
 
 dependencies {
 
+    implementation(libs.play.services.maps)
     val nav_version = "2.9.8"
 
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
-    implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("androidx.navigation:navigation-compose:$nav_version")
     implementation(platform("com.google.firebase:firebase-bom:34.16.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
-
-    implementation("com.google.maps.android:maps-compose:...")
     implementation("com.esri:arcgis-maps-kotlin:300.0.0")
-
+    implementation(platform("com.esri:arcgis-maps-kotlin-toolkit-bom:300.0.0"))
+    implementation("com.esri:arcgis-maps-kotlin-toolkit-geoview-compose")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("androidx.compose.material:material-icons-core")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
