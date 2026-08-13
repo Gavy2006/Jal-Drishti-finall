@@ -210,7 +210,6 @@ fun CalculateScreen(
             .padding(20.dp)
     ) {
 
-        // ---------------- HEADER ----------------
 
         Text(
             text = "Rainwater",
@@ -241,7 +240,6 @@ fun CalculateScreen(
         )
 
 
-        // ---------------- LOCATION CARD ----------------
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -374,7 +372,6 @@ fun CalculateScreen(
         )
 
 
-        // ---------------- ROOF DETAILS ----------------
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -515,7 +512,6 @@ fun CalculateScreen(
         )
 
 
-        // ---------------- CALCULATE BUTTON ----------------
 
         Button(
             onClick = {
