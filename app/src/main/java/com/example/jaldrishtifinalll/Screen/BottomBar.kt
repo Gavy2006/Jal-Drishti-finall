@@ -84,6 +84,7 @@ navController.navigate("home")
             label = "Map",
             selected == 2,
             onClick = {
+                navController.navigate("map_test")
             }
         )
 

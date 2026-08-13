@@ -12,6 +12,8 @@ android {
     compileSdk = 36
 
     defaultConfig {
+
+
         applicationId = "com.example.jaldrishtifinalll"
         minSdk = 24
         targetSdk = 36
@@ -59,7 +61,9 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
 
-    implementation("com.google.maps.android:maps-compose:6.12.0")
+    implementation("com.google.maps.android:maps-compose:...")
+    implementation("com.esri:arcgis-maps-kotlin:300.0.0")
+
     implementation("androidx.compose.material:material-icons-core")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
