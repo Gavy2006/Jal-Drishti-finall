@@ -131,23 +131,9 @@ fun CalculateScreen(
 
             if (granted) {
 
-                fusedLocationClient.lastLocation
-                    .addOnSuccessListener { location ->
+                locationText =
+                    "Permission granted. Tap location again."
 
-                        if (location != null) {
-
-                            latitude = location.latitude
-                            longitude = location.longitude
-
-                            locationText =
-                                "Location detected successfully"
-
-                        } else {
-
-                            locationText =
-                                "Unable to detect location"
-                        }
-                    }
             } else {
 
                 locationText =
@@ -496,19 +482,19 @@ fun CalculateScreen(
                 )
 
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            expanded = !expanded
-                        }
+                    modifier = Modifier.fillMaxWidth()
                 ) {
 
                     OutlinedTextField(
                         value = roofType,
                         onValueChange = {},
                         readOnly = true,
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth(),
+                        enabled = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                expanded = !expanded
+                            },
                         singleLine = true,
                         shape = RoundedCornerShape(13.dp),
                         trailingIcon = {
@@ -518,7 +504,10 @@ fun CalculateScreen(
                                         Icons.Default.KeyboardArrowUp
                                     else
                                         Icons.Default.KeyboardArrowDown,
-                                contentDescription = "Select Roof Type"
+                                contentDescription = "Select Roof Type",
+                                modifier = Modifier.clickable {
+                                    expanded = !expanded
+                                }
                             )
                         }
                     )
@@ -546,10 +535,6 @@ fun CalculateScreen(
             Spacer(
                 modifier = Modifier.height(20.dp)
             )
-            Spacer(
-                modifier = Modifier.height(20.dp)
-            )
-
 
 
             Button(
