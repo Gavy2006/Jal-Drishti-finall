@@ -1,6 +1,7 @@
 package com.example.jaldrishtifinalll.Screen
 
-
+import android.os.Looper
+import com.google.android.gms.location.Priority
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -50,6 +51,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -99,7 +102,12 @@ fun CalculateScreen(
     val roofTypes = listOf(
         "Concrete",
         "Metal",
-        "Tiles"
+        "Tiled",
+        "Asbestos",
+        "Flat RCC",
+        "Sloped GI Sheet",
+        "Thatched",
+        "Green Roof"
     )
 
     val fusedLocationClient =
@@ -161,10 +169,37 @@ fun CalculateScreen(
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
 
-        if (fineGranted || coarseGranted) {
+        if (!fineGranted && !coarseGranted) {
 
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location ->
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+
+            return
+        }
+
+        locationText = "Detecting current location..."
+
+        val locationRequest =
+            com.google.android.gms.location.LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                1000L
+            )
+                .setWaitForAccurateLocation(true)
+                .setMaxUpdates(1)
+                .build()
+
+        val locationCallback =
+            object : com.google.android.gms.location.LocationCallback() {
+
+                override fun onLocationResult(
+                    result: com.google.android.gms.location.LocationResult
+                ) {
+
+                    val location = result.lastLocation
 
                     if (location != null) {
 
@@ -180,16 +215,13 @@ fun CalculateScreen(
                             "Unable to detect location"
                     }
                 }
+            }
 
-        } else {
-
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
-        }
+        fusedLocationClient.requestLocationUpdates(
+            locationRequest,
+            locationCallback,
+            Looper.getMainLooper()
+        )
     }
 
 
@@ -464,39 +496,45 @@ fun CalculateScreen(
                 )
 
                 Box(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            expanded = !expanded
+                        }
                 ) {
 
                     OutlinedTextField(
                         value = roofType,
                         onValueChange = {},
                         readOnly = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                expanded = true
-                            },
+                        enabled = false,
+                        modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        shape =
-                            RoundedCornerShape(13.dp)
+                        shape = RoundedCornerShape(13.dp),
+                        trailingIcon = {
+                            Icon(
+                                imageVector =
+                                    if (expanded)
+                                        Icons.Default.KeyboardArrowUp
+                                    else
+                                        Icons.Default.KeyboardArrowDown,
+                                contentDescription = "Select Roof Type"
+                            )
+                        }
                     )
 
                     DropdownMenu(
                         expanded = expanded,
                         onDismissRequest = {
                             expanded = false
-                        },
-                        modifier = Modifier.fillMaxWidth(0.8f)
+                        }
                     ) {
-
                         roofTypes.forEach { type ->
-
                             DropdownMenuItem(
                                 text = {
                                     Text(type)
                                 },
                                 onClick = {
-
                                     roofType = type
                                     expanded = false
                                 }
@@ -505,246 +543,250 @@ fun CalculateScreen(
                     }
                 }
             }
-        }
-
-        Spacer(
-            modifier = Modifier.height(20.dp)
-        )
-
-
-
-        Button(
-            onClick = {
-
-                val area =
-                    roofArea.toDoubleOrNull()
-
-                if (
-                    area != null &&
-                    area > 0 &&
-                    latitude != null &&
-                    longitude != null
-                ) {
-
-                    val request =
-                        RainfallRequest(
-                            place = null,
-                            lat = latitude,
-                            lon = longitude,
-                            roof_type =
-                                roofType.lowercase(),
-                            roof_area_m2 = area
-                        )
-
-                    rainfallViewModel.asessRainwater(request)
-                }
-            },
-            enabled =
-                !isLoading &&
-                        roofArea.toDoubleOrNull() != null &&
-                        roofArea.toDoubleOrNull()!! > 0 &&
-                        latitude != null &&
-                        longitude != null,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(58.dp),
-            shape = RoundedCornerShape(15.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF173B43)
-            )
-        ) {
-
-            if (isLoading) {
-
-                CircularProgressIndicator(
-                    modifier = Modifier.size(22.dp),
-                    color = Color.White,
-                    strokeWidth = 2.dp
-                )
-
-                Spacer(
-                    modifier = Modifier.width(10.dp)
-                )
-
-                Text(
-                    text = "Calculating...",
-                    color = Color.White
-                )
-
-            } else {
-
-                Icon(
-                    imageVector =
-                        Icons.Default.LocationOn,
-                    contentDescription = null,
-                    tint = Color.White
-                )
-
-                Spacer(
-                    modifier = Modifier.width(8.dp)
-                )
-
-                Text(
-                    text = "Calculate Harvest Potential",
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
-
-
-        // ---------------- ERROR ----------------
-
-        if (error.isNotEmpty()) {
-
             Spacer(
-                modifier = Modifier.height(15.dp)
+                modifier = Modifier.height(20.dp)
             )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(15.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFE4E4)
-                )
-            ) {
-
-                Text(
-                    text = error,
-                    color = Color(0xFFC62828),
-                    modifier = Modifier.padding(15.dp),
-                    fontSize = 13.sp
-                )
-            }
-        }
-
-
-        // ---------------- RESULT ----------------
-
-        result?.let { data ->
-
             Spacer(
                 modifier = Modifier.height(20.dp)
             )
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF173B43)
-                ),
-                elevation =
-                    CardDefaults.cardElevation(
-                        defaultElevation = 6.dp
-                    )
-            ) {
 
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment =
-                        Alignment.CenterHorizontally
-                ) {
 
-                    Text(
-                        text = "Estimated Annual Harvest",
-                        color = Color.White.copy(
-                            alpha = 0.8f
-                        ),
-                        fontSize = 14.sp
-                    )
+            Button(
+                onClick = {
 
-                    Spacer(
-                        modifier = Modifier.height(10.dp)
-                    )
+                    val area = roofArea.toDoubleOrNull()
 
-                    Row(
-                        verticalAlignment =
-                            Alignment.CenterVertically
-                    ) {
-
-                        Icon(
-                            imageVector =
-                                Icons.Default.LocationOn,
-                            contentDescription = null,
-                            tint =
-                                Color(0xFF65C6DA),
-                            modifier = Modifier.size(35.dp)
-                        )
-
-                        Spacer(
-                            modifier = Modifier.width(8.dp)
-                        )
-
-                        Text(
-                            text = String.format(
-                                "%,.0f",
-                                data.harvestable_litres
-                            ),
-                            color = Color.White,
-                            fontSize = 38.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Spacer(
-                            modifier = Modifier.width(6.dp)
-                        )
-
-                        Text(
-                            text = "L",
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                    if (area == null || area <= 0) {
+                        return@Button
                     }
 
-                    Text(
-                        text = "per year",
-                        color = Color.White.copy(
-                            alpha = 0.7f
-                        ),
-                        fontSize = 13.sp
+                    if (latitude == null || longitude == null) {
+                        getLocation()
+                        return@Button
+                    }
+
+                    val request = RainfallRequest(
+                        place = null,
+                        lat = latitude,
+                        lon = longitude,
+                        roof_type = when (roofType) {
+                            "Concrete" -> "concrete"
+                            "Metal" -> "metal"
+                            "Tiled" -> "tiled"
+                            "Asbestos" -> "asbestos"
+                            "Flat RCC" -> "flat_rcc"
+                            "Sloped GI Sheet" -> "sloped_gi_sheet"
+                            "Thatched" -> "thatched"
+                            "Green Roof" -> "green_roof"
+                            else -> "concrete"
+                        },
+                        roof_area_m2 = area
+                    )
+
+                    rainfallViewModel.asessRainwater(request)
+                },
+                enabled =
+                    !isLoading &&
+                            roofArea.toDoubleOrNull() != null &&
+                            roofArea.toDoubleOrNull()!! > 0,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(58.dp),
+                shape = RoundedCornerShape(15.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF173B43)
+                )
+            ) {
+
+                if (isLoading) {
+
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
                     )
 
                     Spacer(
-                        modifier = Modifier.height(25.dp)
+                        modifier = Modifier.width(10.dp)
                     )
 
-                    ResultRow(
-                        title = "Annual Rainfall",
-                        value =
-                            "${data.annual_rainfall_mm} mm"
+                    Text(
+                        text = "Calculating...",
+                        color = Color.White
                     )
 
-                    ResultRow(
-                        title = "Roof Area",
-                        value =
-                            "${data.roof_area_m2} m²"
+                } else {
+
+                    Icon(
+                        imageVector =
+                            Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = Color.White
                     )
 
-                    ResultRow(
-                        title = "Roof Type",
-                        value =
-                            data.roof_type.replaceFirstChar {
-                                it.uppercase()
-                            }
+                    Spacer(
+                        modifier = Modifier.width(8.dp)
                     )
 
-                    ResultRow(
-                        title = "Runoff Coefficient",
-                        value =
-                            data.runoff_coefficient_used
-                                .toString()
+                    Text(
+                        text = "Calculate Harvest Potential",
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
-        }
 
-        Spacer(
-            modifier = Modifier.height(30.dp)
-        )
-    }
-}
+            if (error.isNotEmpty()) {
+
+                Spacer(
+                    modifier = Modifier.height(15.dp)
+                )
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(15.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFFFE4E4)
+                    )
+                ) {
+
+                    Text(
+                        text = error,
+                        color = Color(0xFFC62828),
+                        modifier = Modifier.padding(15.dp),
+                        fontSize = 13.sp
+                    )
+                }
+            }
+
+
+            // ---------------- RESULT ----------------
+
+            result?.let { data ->
+
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF173B43)
+                    ),
+                    elevation =
+                        CardDefaults.cardElevation(
+                            defaultElevation = 6.dp
+                        )
+                ) {
+
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment =
+                            Alignment.CenterHorizontally
+                    ) {
+
+                        Text(
+                            text = "Estimated Annual Harvest",
+                            color = Color.White.copy(
+                                alpha = 0.8f
+                            ),
+                            fontSize = 14.sp
+                        )
+
+                        Spacer(
+                            modifier = Modifier.height(10.dp)
+                        )
+
+                        Row(
+                            verticalAlignment =
+                                Alignment.CenterVertically
+                        ) {
+
+                            Icon(
+                                imageVector =
+                                    Icons.Default.LocationOn,
+                                contentDescription = null,
+                                tint =
+                                    Color(0xFF65C6DA),
+                                modifier = Modifier.size(35.dp)
+                            )
+
+                            Spacer(
+                                modifier = Modifier.width(8.dp)
+                            )
+
+                            Text(
+                                text = String.format(
+                                    "%,.0f",
+                                    data.harvestable_litres
+                                ),
+                                color = Color.White,
+                                fontSize = 38.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Spacer(
+                                modifier = Modifier.width(6.dp)
+                            )
+
+                            Text(
+                                text = "L",
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Text(
+                            text = "per year",
+                            color = Color.White.copy(
+                                alpha = 0.7f
+                            ),
+                            fontSize = 13.sp
+                        )
+
+                        Spacer(
+                            modifier = Modifier.height(25.dp)
+                        )
+
+                        ResultRow(
+                            title = "Annual Rainfall",
+                            value =
+                                "${data.annual_rainfall_mm} mm"
+                        )
+
+                        ResultRow(
+                            title = "Roof Area",
+                            value =
+                                "${data.roof_area_m2} m²"
+                        )
+
+                        ResultRow(
+                            title = "Roof Type",
+                            value =
+                                data.roof_type.replaceFirstChar {
+                                    it.uppercase()
+                                }
+                        )
+
+                        ResultRow(
+                            title = "Runoff Coefficient",
+                            value =
+                                data.runoff_coefficient_used
+                                    .toString()
+                        )
+                    }
+                }
+            }
+        }
+                Spacer(
+                    modifier = Modifier.height(30.dp)
+                )
+            }
+        }
 
 
 @Composable
