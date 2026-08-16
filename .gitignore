@@ -26,3 +26,7 @@ rag-backend/data/processed/
 
 # Logs
 *.log
+
+# RAG local data
+rag-backend/data/chroma_db/
+rag-backend/data/documents/
