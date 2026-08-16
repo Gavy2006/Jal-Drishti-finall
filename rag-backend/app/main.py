@@ -1,11 +1,18 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
-from app.models.report_models import ReportRequest
+from app.models.report_models import (
+    DetailedReport,
+    ReportRequest,
+)
+
+from app.services.report_service import (
+    generate_report,
+)
 
 
 app = FastAPI(
     title="Jal Drishti RAG Backend",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 
@@ -23,9 +30,24 @@ def health():
     }
 
 
-@app.post("/api/report")
-def create_report(request: ReportRequest):
-    return {
-        "status": "received",
-        "data": request.model_dump()
-    }
+@app.post(
+    "/api/report",
+    response_model=DetailedReport,
+)
+def create_report(
+    request: ReportRequest,
+):
+    try:
+
+        report = generate_report(
+            request
+        )
+
+        return report
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e),
+        )
