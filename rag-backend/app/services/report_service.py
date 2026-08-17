@@ -83,6 +83,9 @@ IMPORTANT:
 3. Keep costs and policies tied to the available source/year.
 4. Return ONLY valid JSON.
 5. Do not wrap the JSON in markdown code fences.
+6. For "sources", use ONLY the source citations provided in the retrieved context.
+7. Every source must contain the PDF filename and page number.
+8. Never invent a PDF filename or page number.
 
 Return exactly these fields:
 
@@ -119,11 +122,18 @@ Return exactly these fields:
         f"""
 SOURCE: {item.get("source")}
 PAGE: {item.get("page")}
+CITATION: {item.get("citation")}
 
 {item.get("text")}
 """
         for item in context_items
     )
+
+    source_citations = [
+        item["citation"]
+        for item in context_items
+        if item.get("citation")
+    ]
 
     prompt = f"""
 You are the report-generation engine for Jal Drishti.
@@ -135,6 +145,10 @@ RETRIEVED RAG CONTEXT:
 {context_text if context_text else "No relevant documents are currently available."}
 
 Generate the final report using the instructions above.
+
+For the sources field, use only these retrieved citations:
+
+{json.dumps(source_citations, indent=2)}
 
 Return ONLY valid JSON.
 """
@@ -154,6 +168,10 @@ Return ONLY valid JSON.
         raise ValueError(
             "LLM returned invalid JSON"
         ) from e
+
+    # Force sources to come from the retriever,
+    # not from anything hallucinated by the LLM.
+    report_data["sources"] = source_citations
 
     return DetailedReport.model_validate(
         report_data
