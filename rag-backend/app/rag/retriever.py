@@ -11,8 +11,15 @@ def retrieve_context(
         top_k=top_k,
     )
 
-    documents = results.get("documents", [[]])[0]
-    metadatas = results.get("metadatas", [[]])[0]
+    documents = results.get(
+        "documents",
+        [[]],
+    )[0]
+
+    metadatas = results.get(
+        "metadatas",
+        [[]],
+    )[0]
 
     context = []
 
@@ -20,11 +27,26 @@ def retrieve_context(
         documents,
         metadatas,
     ):
+        source = metadata.get(
+            "source",
+            "Unknown source",
+        )
+
+        page = metadata.get(
+            "page",
+            None,
+        )
+
         context.append(
             {
                 "text": document,
-                "source": metadata.get("source"),
-                "page": metadata.get("page"),
+                "source": source,
+                "page": page,
+                "citation": (
+                    f"{source} — Page {page}"
+                    if page is not None
+                    else source
+                ),
             }
         )
 
