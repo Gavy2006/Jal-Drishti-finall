@@ -8,3 +8,4 @@ pymupdf
 pytesseract
 Pillow
 python-dotenv
+sentence-transformers==5.7.0
