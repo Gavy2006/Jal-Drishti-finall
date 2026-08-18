@@ -12,7 +12,7 @@ android {
     namespace = "com.example.jaldrishtifinalll"
     compileSdk = 36
 
-    // Read MAPTILER_API_KEY from local.properties
+    // Read Google Maps API key from local.properties
     val localProperties = Properties()
     val localPropertiesFile = rootProject.file("local.properties")
 
@@ -20,7 +20,8 @@ android {
         localProperties.load(localPropertiesFile.inputStream())
     }
 
-    val mapTilerApiKey = localProperties.getProperty("MAPTILER_API_KEY") ?: ""
+    val mapsApiKey =
+        localProperties.getProperty("MAPS_API_KEY") ?: ""
 
     defaultConfig {
         applicationId = "com.example.jaldrishtifinalll"
@@ -29,11 +30,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        buildConfigField(
-            "String",
-            "MAPTILER_API_KEY",
-            mapTilerApiKey
-        )
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
 
         testInstrumentationRunner =
             "androidx.test.runner.AndroidJUnitRunner"
@@ -71,8 +68,9 @@ kotlin {
 
 dependencies {
 
-    // MapTiler
-    implementation("com.maptiler:maptiler-sdk-kotlin:1.3.0")
+    // Google Maps
+    implementation("com.google.android.gms:play-services-maps:20.0.0")
+    implementation("com.google.maps.android:maps-compose:6.12.0")
 
     // Navigation
     val nav_version = "2.9.8"

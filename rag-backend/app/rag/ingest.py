@@ -13,35 +13,20 @@ DOCUMENTS_DIR = Path("data/documents")
 TESSERACT_PATH = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-def extract_page_text(
-    pdf_path: Path,
-) -> list[tuple[int, str]]:
-    """
-    Extract text page-by-page.
-
-    First tries normal PDF text extraction.
-    If a page has no extractable text, OCR is used for that page.
-    """
-
-    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
-
+def extract_page_text(pdf_path: Path) -> list[tuple[int, str]]:
     reader = PdfReader(str(pdf_path))
     pdf = fitz.open(str(pdf_path))
 
     extracted_pages = []
 
+    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+
     for index, reader_page in enumerate(reader.pages):
-
         page_number = index + 1
-
         text = reader_page.extract_text() or ""
 
         if not text.strip():
-
-            print(
-                f"  OCR page "
-                f"{page_number}/{len(reader.pages)}"
-            )
+            print(f"  OCR page {page_number}/{len(reader.pages)}")
 
             page = pdf[index]
 
@@ -63,87 +48,72 @@ def extract_page_text(
 
         if text.strip():
             extracted_pages.append(
-                (
-                    page_number,
-                    text.strip(),
-                )
+                (page_number, text.strip())
             )
 
     pdf.close()
-
     return extracted_pages
 
 
-def process_pdf(
-    pdf_path: Path,
-) -> int:
+def load_all_chunks():
+    pdf_files = sorted(DOCUMENTS_DIR.glob("*.pdf"))
 
-    print(f"\nProcessing: {pdf_path.name}")
+    print(f"PDF files discovered: {len(pdf_files)}")
 
-    pages = extract_page_text(pdf_path)
-
-    total_chunks = 0
-
-    for page_number, text in pages:
-
-        chunks = chunk_text(
-            text=text,
-            source=pdf_path.name,
-            page=page_number,
-            chunk_size=1000,
-            overlap=150,
-        )
-
-        if not chunks:
-            continue
-
-        added = add_chunks(chunks)
-
-        total_chunks += added
-
-    print(
-        f"  → {len(pages)} pages extracted"
-    )
-
-    print(
-        f"  → {total_chunks} chunks stored"
-    )
-
-    return total_chunks
-
-
-def load_and_index_documents() -> int:
-
-    if not DOCUMENTS_DIR.exists():
-
-        DOCUMENTS_DIR.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
-    pdf_files = sorted(
-        DOCUMENTS_DIR.glob("*.pdf")
-    )
-
-    print(
-        f"PDF files discovered: "
-        f"{len(pdf_files)}"
-    )
-
-    total_chunks = 0
+    all_chunks = []
 
     for pdf_path in pdf_files:
+        print(f"\nProcessing: {pdf_path.name}")
 
-        total_chunks += process_pdf(
-            pdf_path
+        pages = extract_page_text(pdf_path)
+
+        print(
+            f"  → {len(pages)} pages extracted"
         )
 
-    return total_chunks
+        for page_number, text in pages:
+            chunks = chunk_text(
+                text=text,
+                source=pdf_path.name,
+                page=page_number,
+                chunk_size=1000,
+                overlap=150,
+            )
+
+            all_chunks.extend(chunks)
+
+        print(
+            f"  → cumulative chunks: {len(all_chunks)}"
+        )
+
+    return all_chunks
+
+
+def index_all_chunks(chunks):
+    batch_size = 50
+    total = 0
+
+    for i in range(0, len(chunks), batch_size):
+        batch = chunks[i:i + batch_size]
+
+        print(
+            f"\nIndexing batch "
+            f"{i + 1}-{i + len(batch)} / {len(chunks)}"
+        )
+
+        total += add_chunks(batch)
+
+    return total
 
 
 if __name__ == "__main__":
+    all_chunks = load_all_chunks()
 
-    total = load_and_index_documents()
+    print(
+        f"\nTOTAL CHUNKS CREATED: {len(all_chunks)}"
+    )
+
+    total = index_all_chunks(all_chunks)
 
     print(
         f"\nTOTAL CHUNKS STORED: {total}"

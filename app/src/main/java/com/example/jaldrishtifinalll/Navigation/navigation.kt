@@ -16,7 +16,6 @@ import com.example.jaldrishtifinalll.Screen.LoginPage
 import com.example.jaldrishtifinalll.Screen.SignUpPage
 import com.example.jaldrishtifinalll.Screen.WelcomePage
 import com.example.jaldrishtifinalll.Screen.JalDrishtiBottomBar
-import com.example.jaldrishtifinalll.Screen.MapTestScreen
 import com.example.jaldrishtifinalll.Screen.ProfilePage
 import com.example.jaldrishtifinalll.Screen.TopBar
 import com.example.jaldrishtifinalll.ViewModel.ProfileViewModel
@@ -80,9 +79,7 @@ fun Navigation() {
                 CalculateScreen(navController)
             }
 
-            composable("map_test") {
-                MapTestScreen()
-            }
+
         }
     }
 }
