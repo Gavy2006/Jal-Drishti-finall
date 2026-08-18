@@ -3,8 +3,7 @@ from pathlib import Path
 import chromadb
 from sentence_transformers import SentenceTransformer
 
-
-VECTOR_DB_DIR = Path("data/chroma_db")
+VECTOR_DB_DIR = Path("/app/chroma_db")
 COLLECTION_NAME = "jal_drishti_documents"
 
 # Local embedding model — no Gemini quota needed
