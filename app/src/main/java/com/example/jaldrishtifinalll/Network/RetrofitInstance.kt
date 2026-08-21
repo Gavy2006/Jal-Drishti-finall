@@ -3,18 +3,18 @@ package com.example.jaldrishtifinalll.Network
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-object RetrofitInstance{
-    private const val Base_url =  "https://jal-drishti-production.up.railway.app/"
 
+object RetrofitInstance {
+    private const val BASE_URL = "https://jal-drishti-production-bd14.up.railway.app/"
 
-    val api : JalDrishtiApi by lazy {
-
+    private val retrofit =
         Retrofit.Builder()
-            .baseUrl(Base_url)
+            .baseUrl(BASE_URL)
             .addConverterFactory(
                 GsonConverterFactory.create()
             )
             .build()
-            .create(JalDrishtiApi::class.java)
-    }
+
+    val api: RainfallApi =
+        retrofit.create(RainfallApi::class.java)
 }

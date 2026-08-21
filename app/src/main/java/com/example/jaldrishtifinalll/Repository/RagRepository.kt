@@ -9,17 +9,18 @@ class RagRepository {
     private val api = RagRetrofitInstance.api
 
     suspend fun generateReport(
-        request : RagReportRequest
-    ) :Result<RagReportResponse>{
-
+        request: RagReportRequest
+    ): Result<RagReportResponse> {
 
         return try {
 
-          val response =  api.generateReport(request)
+            val response =
+                api.generateReport(request)
 
             Result.success(response)
-        }
-        catch(e : Exception) {
+
+        } catch (e: Exception) {
+
             Result.failure(e)
         }
     }

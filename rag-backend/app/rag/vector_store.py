@@ -1,12 +1,11 @@
 from pathlib import Path
-
 import chromadb
 from sentence_transformers import SentenceTransformer
 
-VECTOR_DB_DIR = Path("/app/chroma_db")
+VECTOR_DB_DIR = Path("data/chroma_db")
+
 COLLECTION_NAME = "jal_drishti_documents"
 
-# Local embedding model — no Gemini quota needed
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
 embedding_model = SentenceTransformer(
@@ -60,9 +59,7 @@ def add_chunks(chunks) -> int:
         for chunk in chunks
     ]
 
-    embeddings = generate_embeddings(
-        documents
-    )
+    embeddings = generate_embeddings(documents)
 
     collection.upsert(
         ids=ids,
@@ -78,9 +75,7 @@ def search_similar(
     query: str,
     top_k: int = 5,
 ):
-    query_embedding = generate_embeddings(
-        [query]
-    )[0]
+    query_embedding = generate_embeddings([query])[0]
 
     return collection.query(
         query_embeddings=[query_embedding],

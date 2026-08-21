@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.jaldrishtifinalll.Screen.CalculateScreen
+import com.example.jaldrishtifinalll.Screen.DetailedReportScreen
 
 import com.example.jaldrishtifinalll.Screen.HomePage
 import com.example.jaldrishtifinalll.Screen.LoginPage
@@ -79,6 +80,11 @@ fun Navigation() {
                 CalculateScreen(navController)
             }
 
+            composable("detailedReport") {
+                DetailedReportScreen(
+                    navController = navController
+                )
+            }
 
         }
     }

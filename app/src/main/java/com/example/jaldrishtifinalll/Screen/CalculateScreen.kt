@@ -23,10 +23,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-
 import androidx.compose.foundation.text.KeyboardOptions
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -45,6 +45,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,6 +70,9 @@ import androidx.navigation.NavController
 import com.example.jaldrishtifinalll.ViewModel.RainfallViewModel
 import com.example.jaldrishtifinalll.model.RainfallRequest
 
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 
@@ -92,9 +96,32 @@ fun CalculateScreen(
 
     val context = LocalContext.current
 
-    val result by rainfallViewModel.result.collectAsState()
-    val isLoading by rainfallViewModel.isLoading.collectAsState()
-    val error by rainfallViewModel.error.collectAsState()
+    // ---------------------------------------------------------
+    // VIEWMODEL STATES
+    // ---------------------------------------------------------
+
+    val result by
+    rainfallViewModel.result.collectAsState()
+
+    val isLoading by
+    rainfallViewModel.isLoading.collectAsState()
+
+    val error by
+    rainfallViewModel.error.collectAsState()
+
+    val detailedReport by
+    rainfallViewModel.detailedReport.collectAsState()
+
+    val reportLoading by
+    rainfallViewModel.reportLoading.collectAsState()
+
+    val reportError by
+    rainfallViewModel.reportError.collectAsState()
+
+
+    // ---------------------------------------------------------
+    // LOCAL UI STATE
+    // ---------------------------------------------------------
 
     var roofArea by remember {
         mutableStateOf("")
@@ -120,6 +147,22 @@ fun CalculateScreen(
         mutableStateOf("Location not detected")
     }
 
+
+    // Fallback location so map/backend can work even before GPS.
+    val fallbackLatitude = 29.9695
+    val fallbackLongitude = 76.8783
+
+    val mapLatitude =
+        latitude ?: fallbackLatitude
+
+    val mapLongitude =
+        longitude ?: fallbackLongitude
+
+
+    // ---------------------------------------------------------
+    // ROOF TYPES
+    // ---------------------------------------------------------
+
     val roofTypes = listOf(
         "Concrete",
         "Metal",
@@ -131,68 +174,30 @@ fun CalculateScreen(
         "Green Roof"
     )
 
+
+    // ---------------------------------------------------------
+    // LOCATION CLIENT
+    // ---------------------------------------------------------
+
     val fusedLocationClient =
         remember {
             LocationServices
                 .getFusedLocationProviderClient(context)
         }
 
-    val locationPermissionLauncher =
-        rememberLauncherForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
-        ) { permissions ->
 
-            val granted =
-                permissions[
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ] == true ||
-                        permissions[
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                        ] == true
+    // ---------------------------------------------------------
+    // START LOCATION UPDATE
+    // ---------------------------------------------------------
 
-            if (granted) {
-
-                locationText =
-                    "Permission granted. Tap location again."
-
-            } else {
-
-                locationText =
-                    "Location permission required"
-            }
-        }
-
-    fun getLocation() {
-
-        val fineGranted =
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-        val coarseGranted =
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-        if (!fineGranted && !coarseGranted) {
-
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
-
-            return
-        }
+    fun startLocationUpdates() {
 
         locationText =
             "Detecting current location..."
 
+
         val locationRequest =
-            com.google.android.gms.location.LocationRequest.Builder(
+            LocationRequest.Builder(
                 Priority.PRIORITY_HIGH_ACCURACY,
                 1000L
             )
@@ -200,13 +205,12 @@ fun CalculateScreen(
                 .setMaxUpdates(1)
                 .build()
 
+
         val locationCallback =
-            object :
-                com.google.android.gms.location.LocationCallback() {
+            object : LocationCallback() {
 
                 override fun onLocationResult(
-                    result:
-                    com.google.android.gms.location.LocationResult
+                    result: LocationResult
                 ) {
 
                     val location =
@@ -226,10 +230,11 @@ fun CalculateScreen(
                     } else {
 
                         locationText =
-                            "Unable to detect location"
+                            "Using default location"
                     }
                 }
             }
+
 
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
@@ -238,6 +243,137 @@ fun CalculateScreen(
         )
     }
 
+
+    // ---------------------------------------------------------
+    // PERMISSION LAUNCHER
+    // ---------------------------------------------------------
+
+    val locationPermissionLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+
+            val granted =
+                permissions[
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ] == true ||
+                        permissions[
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        ] == true
+
+
+            if (granted) {
+
+                startLocationUpdates()
+
+            } else {
+
+                locationText =
+                    "Permission denied - using default location"
+            }
+        }
+
+
+    // ---------------------------------------------------------
+    // REQUEST LOCATION
+    // ---------------------------------------------------------
+
+    fun requestLocation() {
+
+        val fineGranted =
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        val coarseGranted =
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+
+        if (!fineGranted && !coarseGranted) {
+
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+
+            return
+        }
+
+
+        startLocationUpdates()
+    }
+
+
+    // ---------------------------------------------------------
+    // CAMERA
+    // ---------------------------------------------------------
+
+    val currentLocation =
+        LatLng(
+            mapLatitude,
+            mapLongitude
+        )
+
+
+    val cameraPositionState =
+        rememberCameraPositionState {
+            position =
+                CameraPosition.fromLatLngZoom(
+                    currentLocation,
+                    16f
+                )
+        }
+
+
+    // Move camera whenever GPS location changes.
+    LaunchedEffect(
+        mapLatitude,
+        mapLongitude
+    ) {
+
+        cameraPositionState.position =
+            CameraPosition.fromLatLngZoom(
+                LatLng(
+                    mapLatitude,
+                    mapLongitude
+                ),
+                16f
+            )
+    }
+
+
+    // ---------------------------------------------------------
+    // GOOGLE MAP CONFIG
+    // ---------------------------------------------------------
+
+    val mapProperties =
+        remember {
+            MapProperties(
+                mapType =
+                    MapType.SATELLITE
+            )
+        }
+
+
+    val mapUiSettings =
+        remember {
+            MapUiSettings(
+                zoomControlsEnabled = true,
+                myLocationButtonEnabled = false,
+                compassEnabled = true
+            )
+        }
+
+
+    // ---------------------------------------------------------
+    // MAIN SCREEN
+    // ---------------------------------------------------------
 
     Column(
         modifier = Modifier
@@ -256,6 +392,11 @@ fun CalculateScreen(
             .padding(20.dp)
     ) {
 
+
+        // -----------------------------------------------------
+        // HEADER
+        // -----------------------------------------------------
+
         Text(
             text = "Rainwater",
             color = Color.White,
@@ -271,31 +412,46 @@ fun CalculateScreen(
         )
 
         Spacer(
-            modifier = Modifier.height(8.dp)
+            modifier =
+                Modifier.height(8.dp)
         )
 
         Text(
             text =
                 "Estimate how much rainwater your roof can harvest.",
-            color = Color.White.copy(alpha = 0.9f),
+            color =
+                Color.White.copy(
+                    alpha = 0.9f
+                ),
             fontSize = 14.sp
         )
 
+
         Spacer(
-            modifier = Modifier.height(25.dp)
+            modifier =
+                Modifier.height(25.dp)
         )
 
-        // YOUR LOCATION CARD
+
+        // -----------------------------------------------------
+        // LOCATION CARD
+        // -----------------------------------------------------
+
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFEAF7FA)
-            )
+            modifier =
+                Modifier.fillMaxWidth(),
+            shape =
+                RoundedCornerShape(24.dp),
+            colors =
+                CardDefaults.cardColors(
+                    containerColor =
+                        Color(0xFFEAF7FA)
+                )
         ) {
 
             Column(
-                modifier = Modifier.padding(20.dp)
+                modifier =
+                    Modifier.padding(20.dp)
             ) {
 
                 Row(
@@ -304,14 +460,15 @@ fun CalculateScreen(
                 ) {
 
                     Box(
-                        modifier = Modifier
-                            .size(45.dp)
-                            .clip(
-                                RoundedCornerShape(13.dp)
-                            )
-                            .background(
-                                Color(0xFFD5F2F6)
-                            ),
+                        modifier =
+                            Modifier
+                                .size(45.dp)
+                                .clip(
+                                    RoundedCornerShape(13.dp)
+                                )
+                                .background(
+                                    Color(0xFFD5F2F6)
+                                ),
                         contentAlignment =
                             Alignment.Center
                     ) {
@@ -326,30 +483,40 @@ fun CalculateScreen(
                         )
                     }
 
+
                     Spacer(
-                        modifier = Modifier.width(13.dp)
+                        modifier =
+                            Modifier.width(13.dp)
                     )
 
+
                     Column(
-                        modifier = Modifier.weight(1f)
+                        modifier =
+                            Modifier.weight(1f)
                     ) {
 
                         Text(
-                            text = "Your Location",
+                            text =
+                                "Your Location",
                             fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight =
+                                FontWeight.Bold
                         )
 
                         Spacer(
-                            modifier = Modifier.height(3.dp)
+                            modifier =
+                                Modifier.height(3.dp)
                         )
 
                         Text(
-                            text = locationText,
-                            color = Color.Gray,
+                            text =
+                                locationText,
+                            color =
+                                Color.Gray,
                             fontSize = 12.sp
                         )
                     }
+
 
                     Icon(
                         imageVector =
@@ -357,47 +524,58 @@ fun CalculateScreen(
                                 Icons.Default.CheckCircle
                             else
                                 Icons.Default.Refresh,
-                        contentDescription = null,
+                        contentDescription =
+                            null,
                         tint =
                             if (latitude != null)
                                 Color(0xFF29A36A)
                             else
                                 Color(0xFF3FA8BD),
-                        modifier = Modifier
-                            .size(25.dp)
-                            .clickable {
-                                getLocation()
-                            }
+                        modifier =
+                            Modifier
+                                .size(25.dp)
+                                .clickable {
+                                    requestLocation()
+                                }
                     )
                 }
 
+
                 Spacer(
-                    modifier = Modifier.height(15.dp)
+                    modifier =
+                        Modifier.height(15.dp)
                 )
+
 
                 Button(
                     onClick = {
-                        getLocation()
+                        requestLocation()
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor =
-                            Color(0xFF5BC0D7)
-                    )
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                    shape =
+                        RoundedCornerShape(12.dp),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor =
+                                Color(0xFF5BC0D7)
+                        )
                 ) {
 
                     Icon(
                         imageVector =
                             Icons.Default.LocationOn,
-                        contentDescription = null,
-                        tint = Color.Black
+                        contentDescription =
+                            null,
+                        tint =
+                            Color.Black
                     )
 
                     Spacer(
-                        modifier = Modifier.width(8.dp)
+                        modifier =
+                            Modifier.width(8.dp)
                     )
 
                     Text(
@@ -406,94 +584,85 @@ fun CalculateScreen(
                                 "Location Detected"
                             else
                                 "Use My Current Location",
-                        color = Color.Black
+                        color =
+                            Color.Black
                     )
                 }
             }
         }
 
+
         Spacer(
-            modifier = Modifier.height(18.dp)
+            modifier =
+                Modifier.height(18.dp)
         )
 
+
+        // -----------------------------------------------------
         // GOOGLE MAP
-        if (latitude != null && longitude != null) {
+        // -----------------------------------------------------
 
-            val currentLocation =
-                LatLng(
-                    latitude!!,
-                    longitude!!
-                )
-
-            val cameraPositionState =
-                rememberCameraPositionState {
-                    this.position =
-                        CameraPosition.fromLatLngZoom(
-                            currentLocation,
-                            18f
-                        )
-                }
-
-            val mapProperties =
-                remember {
-                    MapProperties(
-                        mapType = MapType.SATELLITE
-                    )
-                }
-
-            val mapUiSettings =
-                remember {
-                    MapUiSettings(
-                        zoomControlsEnabled = true,
-                        myLocationButtonEnabled = false,
-                        compassEnabled = true
-                    )
-                }
-
-            Card(
-                modifier = Modifier
+        Card(
+            modifier =
+                Modifier
                     .fillMaxWidth()
                     .height(320.dp),
-                shape = RoundedCornerShape(24.dp)
+            shape =
+                RoundedCornerShape(24.dp)
+        ) {
+
+            GoogleMap(
+                modifier =
+                    Modifier.fillMaxSize(),
+                cameraPositionState =
+                    cameraPositionState,
+                properties =
+                    mapProperties,
+                uiSettings =
+                    mapUiSettings
             ) {
 
-                GoogleMap(
-                    modifier = Modifier.fillMaxSize(),
-                    cameraPositionState =
-                        cameraPositionState,
-                    properties =
-                        mapProperties,
-                    uiSettings =
-                        mapUiSettings
-                ) {
-
-                    Marker(
-                        state = MarkerState(
+                Marker(
+                    state =
+                        MarkerState(
                             position =
                                 currentLocation
                         ),
-                        title = "Your Location"
-                    )
-                }
+                    title =
+                        if (latitude != null)
+                            "Your Location"
+                        else
+                            "Default Location"
+                )
             }
-
-            Spacer(
-                modifier = Modifier.height(18.dp)
-            )
         }
 
 
+        Spacer(
+            modifier =
+                Modifier.height(18.dp)
+        )
+
+
+        // -----------------------------------------------------
         // ROOF DETAILS CARD
+        // -----------------------------------------------------
+
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFEAF7FA)
-            )
+            modifier =
+                Modifier.fillMaxWidth(),
+            shape =
+                RoundedCornerShape(24.dp),
+            colors =
+                CardDefaults.cardColors(
+                    containerColor =
+                        Color(0xFFEAF7FA)
+                )
         ) {
 
             Column(
-                modifier = Modifier.padding(20.dp)
+                modifier =
+                    Modifier.padding(20.dp)
             ) {
 
                 Row(
@@ -504,43 +673,58 @@ fun CalculateScreen(
                     Icon(
                         imageVector =
                             Icons.Default.LocationOn,
-                        contentDescription = null,
-                        tint = Color(0xFF3FA8BD)
+                        contentDescription =
+                            null,
+                        tint =
+                            Color(0xFF3FA8BD)
                     )
 
                     Spacer(
-                        modifier = Modifier.width(10.dp)
+                        modifier =
+                            Modifier.width(10.dp)
                     )
 
                     Text(
-                        text = "Roof Details",
+                        text =
+                            "Roof Details",
                         fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight =
+                            FontWeight.Bold
                     )
                 }
 
+
                 Spacer(
-                    modifier = Modifier.height(22.dp)
+                    modifier =
+                        Modifier.height(22.dp)
                 )
+
 
                 // ROOF AREA
 
                 Text(
-                    text = "Roof Area",
+                    text =
+                        "Roof Area",
                     fontSize = 13.sp,
-                    color = Color.Gray
+                    color =
+                        Color.Gray
                 )
+
 
                 Spacer(
-                    modifier = Modifier.height(6.dp)
+                    modifier =
+                        Modifier.height(6.dp)
                 )
 
+
                 OutlinedTextField(
-                    value = roofArea,
+                    value =
+                        roofArea,
                     onValueChange = {
                         roofArea = it
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier =
+                        Modifier.fillMaxWidth(),
                     placeholder = {
                         Text(
                             "Enter roof area"
@@ -559,41 +743,50 @@ fun CalculateScreen(
                         RoundedCornerShape(13.dp)
                 )
 
+
                 Spacer(
-                    modifier = Modifier.height(18.dp)
+                    modifier =
+                        Modifier.height(18.dp)
                 )
+
 
                 // ROOF TYPE
 
                 Text(
-                    text = "Roof Type",
+                    text =
+                        "Roof Type",
                     fontSize = 13.sp,
-                    color = Color.Gray
+                    color =
+                        Color.Gray
                 )
+
 
                 Spacer(
-                    modifier = Modifier.height(6.dp)
+                    modifier =
+                        Modifier.height(6.dp)
                 )
 
+
                 Box(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier =
+                        Modifier.fillMaxWidth()
                 ) {
 
                     OutlinedTextField(
-                        value = roofType,
+                        value =
+                            roofType,
                         onValueChange = {},
                         readOnly = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                expanded =
-                                    !expanded
-                            },
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    expanded =
+                                        !expanded
+                                },
                         singleLine = true,
                         shape =
-                            RoundedCornerShape(
-                                13.dp
-                            ),
+                            RoundedCornerShape(13.dp),
                         trailingIcon = {
 
                             Icon(
@@ -613,10 +806,13 @@ fun CalculateScreen(
                         }
                     )
 
+
                     DropdownMenu(
-                        expanded = expanded,
+                        expanded =
+                            expanded,
                         onDismissRequest = {
-                            expanded = false
+                            expanded =
+                                false
                         }
                     ) {
 
@@ -639,18 +835,23 @@ fun CalculateScreen(
                     }
                 }
 
+
                 Spacer(
-                    modifier = Modifier.height(20.dp)
+                    modifier =
+                        Modifier.height(20.dp)
                 )
 
-                // CALCULATE BUTTON
+
+                // ------------------------------------------------
+                // CALCULATE
+                // ------------------------------------------------
 
                 Button(
                     onClick = {
 
                         val area =
-                            roofArea
-                                .toDoubleOrNull()
+                            roofArea.toDoubleOrNull()
+
 
                         if (
                             area == null ||
@@ -659,28 +860,38 @@ fun CalculateScreen(
                             return@Button
                         }
 
-                        if (
-                            latitude == null ||
-                            longitude == null
-                        ) {
 
-                            getLocation()
+                        /*
+                         * Use actual GPS coordinates when
+                         * available.
+                         *
+                         * Otherwise use fallback coordinates
+                         * so backend can still be tested.
+                         */
 
-                            return@Button
-                        }
+                        val requestLatitude =
+                            latitude
+                                ?: fallbackLatitude
+
+                        val requestLongitude =
+                            longitude
+                                ?: fallbackLongitude
+
 
                         val request =
                             RainfallRequest(
+
                                 place = null,
 
                                 lat =
-                                    latitude,
+                                    requestLatitude,
 
                                 lon =
-                                    longitude,
+                                    requestLongitude,
 
                                 roof_type =
                                     when (roofType) {
+
                                         "Concrete" ->
                                             "concrete"
 
@@ -713,11 +924,13 @@ fun CalculateScreen(
                                     area
                             )
 
+
                         rainfallViewModel
                             .asessRainwater(
                                 request
                             )
                     },
+
 
                     enabled =
                         !isLoading &&
@@ -727,18 +940,23 @@ fun CalculateScreen(
                                         it > 0
                                     } == true,
 
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(58.dp),
+
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(58.dp),
+
 
                     shape =
                         RoundedCornerShape(15.dp),
 
+
                     colors =
-                        ButtonDefaults.buttonColors(
-                            containerColor =
-                                Color(0xFF173B43)
-                        )
+                        ButtonDefaults
+                            .buttonColors(
+                                containerColor =
+                                    Color(0xFF173B43)
+                            )
                 ) {
 
                     if (isLoading) {
@@ -746,8 +964,10 @@ fun CalculateScreen(
                         CircularProgressIndicator(
                             modifier =
                                 Modifier.size(22.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
+                            color =
+                                Color.White,
+                            strokeWidth =
+                                2.dp
                         )
 
                         Spacer(
@@ -790,13 +1010,19 @@ fun CalculateScreen(
                         )
                     }
                 }
-                // ERROR
+
+
+                // ------------------------------------------------
+                // CALCULATION ERROR
+                // ------------------------------------------------
+
                 if (error.isNotEmpty()) {
 
                     Spacer(
                         modifier =
                             Modifier.height(15.dp)
                     )
+
 
                     Card(
                         modifier =
@@ -811,166 +1037,315 @@ fun CalculateScreen(
                     ) {
 
                         Text(
-                            text = error,
+                            text =
+                                error,
                             color =
                                 Color(0xFFC62828),
                             modifier =
-                                Modifier.padding(
-                                    15.dp
-                                ),
-                            fontSize = 13.sp
+                                Modifier.padding(15.dp),
+                            fontSize =
+                                13.sp
                         )
                     }
                 }
+            }
+        }
 
 
-                // RESULT
-                result?.let { data ->
+        // ---------------------------------------------------------
+        // RESULT CARD
+        // ---------------------------------------------------------
+
+        result?.let { data ->
+
+            Spacer(
+                modifier =
+                    Modifier.height(20.dp)
+            )
+
+
+            Card(
+                modifier =
+                    Modifier.fillMaxWidth(),
+                shape =
+                    RoundedCornerShape(28.dp),
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor =
+                            Color(0xFF173B43)
+                    ),
+                elevation =
+                    CardDefaults.cardElevation(
+                        defaultElevation =
+                            6.dp
+                    )
+            ) {
+
+                Column(
+                    modifier =
+                        Modifier.padding(24.dp),
+                    horizontalAlignment =
+                        Alignment.CenterHorizontally
+                ) {
+
+                    Text(
+                        text =
+                            "Estimated Annual Harvest",
+                        color =
+                            Color.White.copy(
+                                alpha = 0.8f
+                            ),
+                        fontSize =
+                            14.sp
+                    )
+
+
+                    Spacer(
+                        modifier =
+                            Modifier.height(10.dp)
+                    )
+
+
+                    Row(
+                        verticalAlignment =
+                            Alignment.CenterVertically
+                    ) {
+
+                        Icon(
+                            imageVector =
+                                Icons.Default.LocationOn,
+                            contentDescription =
+                                null,
+                            tint =
+                                Color(0xFF65C6DA),
+                            modifier =
+                                Modifier.size(35.dp)
+                        )
+
+
+                        Spacer(
+                            modifier =
+                                Modifier.width(8.dp)
+                        )
+
+
+                        Text(
+                            text =
+                                String.format(
+                                    "%,.0f",
+                                    data.harvestable_litres
+                                ),
+                            color =
+                                Color.White,
+                            fontSize =
+                                38.sp,
+                            fontWeight =
+                                FontWeight.Bold
+                        )
+
+
+                        Spacer(
+                            modifier =
+                                Modifier.width(6.dp)
+                        )
+
+
+                        Text(
+                            text =
+                                "L",
+                            color =
+                                Color.White,
+                            fontSize =
+                                20.sp,
+                            fontWeight =
+                                FontWeight.Bold
+                        )
+                    }
+
+
+                    Text(
+                        text =
+                            "per year",
+                        color =
+                            Color.White.copy(
+                                alpha = 0.7f
+                            ),
+                        fontSize =
+                            13.sp
+                    )
+
+
+                    Spacer(
+                        modifier =
+                            Modifier.height(25.dp)
+                    )
+
+
+                    ResultRow(
+                        title =
+                            "Annual Rainfall",
+                        value =
+                            "${data.annual_rainfall_mm} mm"
+                    )
+
+
+                    ResultRow(
+                        title =
+                            "Roof Area",
+                        value =
+                            "${data.roof_area_m2} m²"
+                    )
+
+
+                    ResultRow(
+                        title =
+                            "Roof Type",
+                        value =
+                            data.roof_type
+                                .replaceFirstChar {
+                                    it.uppercase()
+                                }
+                    )
+
+
+                    ResultRow(
+                        title =
+                            "Runoff Coefficient",
+                        value =
+                            data.runoff_coefficient_used
+                                .toString()
+                    )
+
 
                     Spacer(
                         modifier =
                             Modifier.height(20.dp)
                     )
 
-                    Card(
+
+                    // -------------------------------------------------
+                    // DETAILED REPORT BUTTON
+                    // -------------------------------------------------
+
+                    Button(
+                        onClick = {
+
+                            navController.navigate(
+                                "detailedReport"
+                            )
+                        },
+
+
+                        enabled =
+                            detailedReport != null &&
+                                    !reportLoading,
+
+
                         modifier =
-                            Modifier.fillMaxWidth(),
+                            Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+
+
                         shape =
-                            RoundedCornerShape(28.dp),
+                            RoundedCornerShape(15.dp),
+
+
                         colors =
-                            CardDefaults.cardColors(
+                            ButtonDefaults.buttonColors(
                                 containerColor =
-                                    Color(0xFF173B43)
-                            ),
-                        elevation =
-                            CardDefaults.cardElevation(
-                                defaultElevation = 6.dp
+                                    Color(0xFF5BC0D7)
                             )
                     ) {
 
-                        Column(
-                            modifier =
-                                Modifier.padding(24.dp),
-                            horizontalAlignment =
-                                Alignment.CenterHorizontally
-                        ) {
+                        if (reportLoading) {
+
+                            CircularProgressIndicator(
+                                modifier =
+                                    Modifier.size(20.dp),
+                                color =
+                                    Color.Black,
+                                strokeWidth =
+                                    2.dp
+                            )
+
+
+                            Spacer(
+                                modifier =
+                                    Modifier.width(10.dp)
+                            )
+
 
                             Text(
                                 text =
-                                    "Estimated Annual Harvest",
+                                    "Preparing Detailed Report...",
                                 color =
-                                    Color.White.copy(
-                                        alpha = 0.8f
-                                    ),
-                                fontSize = 14.sp
+                                    Color.Black,
+                                fontSize =
+                                    14.sp
                             )
+
+                        } else {
+
+                            Icon(
+                                imageVector =
+                                    Icons.Default.ArrowForward,
+                                contentDescription =
+                                    null,
+                                tint =
+                                    Color.Black
+                            )
+
 
                             Spacer(
                                 modifier =
-                                    Modifier.height(10.dp)
+                                    Modifier.width(8.dp)
                             )
 
-                            Row(
-                                verticalAlignment =
-                                    Alignment.CenterVertically
-                            ) {
-
-                                Icon(
-                                    imageVector =
-                                        Icons.Default.LocationOn,
-                                    contentDescription =
-                                        null,
-                                    tint =
-                                        Color(0xFF65C6DA),
-                                    modifier =
-                                        Modifier.size(35.dp)
-                                )
-
-                                Spacer(
-                                    modifier =
-                                        Modifier.width(8.dp)
-                                )
-
-                                Text(
-                                    text =
-                                        String.format(
-                                            "%,.0f",
-                                            data.harvestable_litres
-                                        ),
-                                    color =
-                                        Color.White,
-                                    fontSize =
-                                        38.sp,
-                                    fontWeight =
-                                        FontWeight.Bold
-                                )
-
-                                Spacer(
-                                    modifier =
-                                        Modifier.width(6.dp)
-                                )
-
-                                Text(
-                                    text = "L",
-                                    color =
-                                        Color.White,
-                                    fontSize =
-                                        20.sp,
-                                    fontWeight =
-                                        FontWeight.Bold
-                                )
-                            }
 
                             Text(
-                                text = "per year",
+                                text =
+                                    "View Detailed Report",
                                 color =
-                                    Color.White.copy(
-                                        alpha = 0.7f
-                                    ),
-                                fontSize = 13.sp
-                            )
-
-                            Spacer(
-                                modifier =
-                                    Modifier.height(25.dp)
-                            )
-
-                            ResultRow(
-                                title =
-                                    "Annual Rainfall",
-                                value =
-                                    "${data.annual_rainfall_mm} mm"
-                            )
-
-                            ResultRow(
-                                title =
-                                    "Roof Area",
-                                value =
-                                    "${data.roof_area_m2} m²"
-                            )
-
-                            ResultRow(
-                                title =
-                                    "Roof Type",
-                                value =
-                                    data.roof_type
-                                        .replaceFirstChar {
-                                            it.uppercase()
-                                        }
-                            )
-
-                            ResultRow(
-                                title =
-                                    "Runoff Coefficient",
-                                value =
-                                    data.runoff_coefficient_used
-                                        .toString()
+                                    Color.Black,
+                                fontSize =
+                                    15.sp,
+                                fontWeight =
+                                    FontWeight.Bold
                             )
                         }
                     }
                 }
             }
+
+
+            // -----------------------------------------------------
+            // RAG ERROR
+            // -----------------------------------------------------
+
+            if (reportError.isNotEmpty()) {
+
+                Spacer(
+                    modifier =
+                        Modifier.height(10.dp)
+                )
+
+
+                Text(
+                    text =
+                        reportError,
+                    color =
+                        Color(0xFFC62828),
+                    fontSize =
+                        12.sp,
+                    modifier =
+                        Modifier.padding(
+                            horizontal = 4.dp
+                        )
+                )
+            }
         }
+
 
         Spacer(
             modifier =
@@ -980,6 +1355,10 @@ fun CalculateScreen(
 }
 
 
+// -------------------------------------------------------------
+// RESULT ROW
+// -------------------------------------------------------------
+
 @Composable
 private fun ResultRow(
     title: String,
@@ -987,27 +1366,37 @@ private fun ResultRow(
 ) {
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 7.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(
+                    vertical = 7.dp
+                ),
         horizontalArrangement =
             Arrangement.SpaceBetween
     ) {
 
         Text(
-            text = title,
+            text =
+                title,
             color =
                 Color.White.copy(
                     alpha = 0.7f
                 ),
-            fontSize = 13.sp
+            fontSize =
+                13.sp
         )
 
+
         Text(
-            text = value,
-            color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold
+            text =
+                value,
+            color =
+                Color.White,
+            fontSize =
+                14.sp,
+            fontWeight =
+                FontWeight.SemiBold
         )
     }
 }

@@ -5,7 +5,7 @@ import com.example.jaldrishtifinalll.model.RainfallResponse
 import retrofit2.http.Body
 import retrofit2.http.POST
 
-interface JalDrishtiApi {
+interface RainfallApi {
 
     @POST("assess")
     suspend fun assessRainWater(

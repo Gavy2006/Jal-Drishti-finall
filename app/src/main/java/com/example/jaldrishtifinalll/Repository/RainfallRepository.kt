@@ -4,23 +4,23 @@ import com.example.jaldrishtifinalll.Network.RetrofitInstance
 import com.example.jaldrishtifinalll.model.RainfallRequest
 import com.example.jaldrishtifinalll.model.RainfallResponse
 
-
 class RainfallRepository {
 
     private val api = RetrofitInstance.api
 
     suspend fun assessRainwater(
         request: RainfallRequest
-    ): Result<RainfallResponse>{
+    ): Result<RainfallResponse> {
 
+        return try {
 
-        return try{
-
-            val response = api.assessRainWater(request)
+            val response =
+                api.assessRainWater(request)
 
             Result.success(response)
-        }
-        catch (e : Exception){
+
+        } catch (e: Exception) {
+
             Result.failure(e)
         }
     }
